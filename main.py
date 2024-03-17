@@ -5,84 +5,127 @@ Created on Sun Mar 10 09:06:58 2024
 @author: Leen
 """
 import lea
-import elgamal
+import OFB
+import ElgamalEllipticCurve as gm
 import rsa
-import numpy as np
-import math
-import random
-from tinyec import registry
-from tinyec import ec
-import secrets 
+import sys
 
+def get_ascii_values(string):
+    ascii_values = [ord(char) for char in string]
+    padded_values = ''.join([str(value).zfill(3) for value in ascii_values])
+    return padded_values
 
-
-class Point:
-    """ Point class for representing and manipulating x,y coordinates. """
-
-    def __init__(self):
-        """ Create a new point at the origin """
-        self.x = 0
-        self.y = 0
-
-def get_bin(number: int, n: int)-> str:
-    '''Returns binary representation of number filled with 0's to length n'''
-    return bin(number)[2:].zfill(n)
-
-def get_random_bits(n: int) -> str:
-    '''Returns sequence of random bits of length n'''
-    i = random.randint(0,pow(2,n)-1)
-    bin_key = get_bin(i,n)
-    return bin_key
-
-def compress(publicKey):
-    return (hex(publicKey.x)) + (hex(publicKey.y % 2)[2:])
-
+def get_characters_from_ascii_values(b):
+    try:
+        if (len(b)%3)!=0:
+            b=b.zfill(len(b)+len(b)%3-1)
+        ascii_values = [(int(b[i:i+3])) for i in range(0, len((b)), 3)]
+        characters = ''.join([chr(value) for value in ascii_values])
+        return characters
+    except ValueError:
+        print("Invalid input format.")
+        
 
 def main():
     
-    ################################# Generate plaintext #################################
-    # Generate random plaintext of size 128
-    # P = hex(int(get_random_bits(256), 2))
+   # Generate keys
+   k = "1" + lea.get_random_bits(127) # symmetric key
+   IV = lea.get_random_bits(128) # initial vector\
+   s = 64  # block size for encryption/decryption
+   # do the following to remove zeroes if they are found in the beginning of the string k
+#    intK = int(k)
+#    k = str(intK)
+   print(k)
 
-    ################################# EC & ElGamal #################################
-    # curve.g : Base Point
-    curve = registry.get_curve('brainpoolP160r1') 
-    # Ka, Kb : alice and bob's private keys
-    Ka = secrets.randbelow(curve.field.n) # alice's private key
-    Kb = secrets.randbelow(curve.field.n) # bob's private key
-
-    # (y1,y2)
-    y1 = Ka * curve.g # alice's public key
-    # for this part the plaintext P is a point on the curve
-    #y2 = curve.g
-    EC_Point = Point()
-    EC_Point.x = 0x4A92BDA82A2E168896D94D428A08F7CCF443B04129999AC646F18115C6D353868
-    EC_Point.y = 0x21FB819707ECA9EF71075C3EED28C726694AEC06AADC8052A60B7AA29E3A1063
-    #y2 = compress(EC_Point) + compress(Ka*(Kb * curve.g))
-    # print(EC_Point.x)
-    # x = ec.Point(curve, 0x4A92BDA82A2E168896D94D428A08F7CCF443B04129999AC646F18115C6D353868, 0x21FB819707ECA9EF71075C3EED28C726694AEC06AADC8052A60B7AA29E3A1063)
-    # print(type(x))
-    
+   print('Alice wants to send an Email to Bob')
+   print('-------------------------------------')
+   print('Generating symmetric key to encrypt email using LEA, OFB mode')
+   print('-------------------------------------')
    
+   old_plaintext = 'Call me @ 123'   
+   
+   result =(bin(int(get_ascii_values(old_plaintext))))[2:]
+   plaintext = result
+   if (len(result) < 128):
+       plaintext=(result).zfill(128)
+#    print(plaintext)
+   ################## LEA ##################
+   # encrypt plaintext using symmetric key
+#    ciphertext = lea.lea_encrypt(plaintext, k)
+   ciphertext = OFB.encrypt_LEA_OFB(message=plaintext, key=k, initialV=IV, block_size=s)
+   print('Plaintext encrypted, now encrypt symmetric key using EC El Gamal')
+   print('-------------------------------------')
 
-# Example coordinates
-    # print(type(y2))
-    # print(type(y1))
-    ################################# LEA #################################
-    LEA_Key = get_random_bits(128) # get symmetric key
-    P = get_random_bits(128)
-    # now we encrypt the symmetric key using bob's public key
-    #C = lea.lea_encrypt(P,LEA_Key)
+   ################## EC El Gamal ##################
+   # now encrypt the symmetric key using EC El gamal
+   symmetricKey = int(k,2)  # change value from str to int
+   y1x,y2x = gm.encrypt(symmetricKey) # encrypt the symmetric key using EC ElGamal
+   
+   print('-------------------------------------')
+   print('Symmetric key encrypted, now add digital signature using RSA')
+   print('-------------------------------------')
 
-    # # now encrypt LEA key with bob's public key
-    # CK = lea.lea_encrypt(LEA_Key,Kb * curve.g)
+   ################## RSA ################
+   # Initialize keys
+   rsa.primefiller()
+   rsa.setkeys()
+   
+   # in the following part, we should add a digital signature using RSA
+   # step 1: hash the ciphertext
+   # step 2: encrypt the hashed ciphertext
+   # step 3: attach signature and send to Bob
+   # if Bob got the same values then he can make sure that the message sent is indeed from alice
+   
+   # 1 hash the ciphertext
+   hashed_ciphertext = hash(ciphertext)
+   # 2 encrypt hashed ciphertext using rsa
+   DS_Encrypted = rsa.encoder(str(hashed_ciphertext))
+   # 3 concat ciphertext + encrypted hash , should add a flag in the middle 
+   Signed_message = ciphertext + 'flag'+ str(DS_Encrypted)
+   print('Digital signature added')
+   
+   ###########################################################################
+    # now Alice's part is over, Bob's part is up
+   print('Email is being sent now')
+   print('Bob received the email, first he need to verify that the message was not tampered')
+   
+   # verification part,first split the digital signature from the ciphertext
+   # this part is all about restoring the digital signature in it's list form to decrypt it
+   signature = Signed_message.split('flag')
+   l = []
+   l.append(signature[1])
+   x = (l[0][1:])[:-1]
+   y = [ int(item) for item in x.split(', ')]
+   # digital signature restored
+   # now decrypt digital signature, aka hashed ciphertext
+   hashed_ciphertext = rsa.decoder(y)
+   
+   # now has the ciphertext
+   hashCipher2 = str(hash(signature[0]))
+   print('Verifying sender ......')
+   if (hashCipher2!=hashed_ciphertext):
+       print('Verification Failed!\nThis message could have been tampered!')
+       sys.exit()
+       
+   print('The signature is valid. Sender authenication successful')
+   
+   ################## Decryption ################
+   # start by decrypting the symmetric key
+   decrypted_symmetricKey = gm.decrypt(y1x, y2x)
+   # now decrypt the ciphertext with the symmetric key
+#    decrypted = lea.lea_decrypt(ciphertext, (bin(decrypted_symmetricKey))[2:])
+   print(len(ciphertext), len(str(decrypted_symmetricKey)))
+   decrypted_symmetricKey = (bin(decrypted_symmetricKey))[2:]
+   decrypted = OFB.encrypt_LEA_OFB(message=ciphertext, key=decrypted_symmetricKey, initialV=IV, block_size=s)
 
-    # # Sign Ciphertext with Alice's secret key
-    # S = lea.lea_encrypt(C,Ka * curve.g)
-    
-    # Alice sends S, C, CK to bob ..
-    # now bob has to verify 
-  
+   print('-------------------------------------')
+   print('Original message:', old_plaintext)
+   print('-------------------------------------')
+   print('Ciphertext:', ciphertext)
+   print('-------------------------------------')
+   print('-------------------------------------')
+   print('Decrypted message:', get_characters_from_ascii_values(str(int(decrypted,2))))
+   print('-------------------------------------')
 
 
 if __name__ == "__main__":

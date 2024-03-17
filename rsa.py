@@ -66,7 +66,6 @@ def setkeys():
 
 	private_key = d
 
-
 # To encrypt the given number
 def encrypt(message):
 	global public_key, n
@@ -111,19 +110,19 @@ def decoder(encoded):
 
 
 # if __name__ == '__main__':
-# 	primefiller()
-# 	setkeys()
-# 	message = "Test Message"
-# 	# Uncomment below for manual input
-# 	# message = input("Enter the message\n")
-# 	# Calling the encoding function
-# 	coded = encoder(message)
+#  	primefiller()
+#  	setkeys()
+#  	message = "Test Message"
+#  	# Uncomment below for manual input
+#  	# message = input("Enter the message\n")
+#  	# Calling the encoding function
+#  	coded = encoder(message)
 
-# 	print("Initial message:")
-# 	print(message)
-# 	print("\n\nThe encoded message(encrypted by public key)\n")
-# 	print(''.join(str(p) for p in coded))
-# 	print("\n\nThe decoded message(decrypted by public key)\n")
-# 	print(''.join(str(p) for p in decoder(coded)))
+#  	print("Initial message:")
+#  	print(message)
+#  	print("\n\nThe encoded message(encrypted by public key)\n")
+#  	print(''.join(str(p) for p in coded))
+#  	print("\n\nThe decoded message(decrypted by public key)\n")
+#  	print(''.join(str(p) for p in decoder(coded)))
 	
 	
