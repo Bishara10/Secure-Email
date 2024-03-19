@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Mar 10 09:06:58 2024
-
-@author: Leen
-"""
 import lea
 import OFB
 import ElgamalEllipticCurve as gm
@@ -28,35 +22,32 @@ def get_characters_from_ascii_values(b):
 
 def main():
     
-   # Generate keys
-   k = "1" + lea.get_random_bits(127) # symmetric key
-   IV = lea.get_random_bits(128) # initial vector\
-   s = 64  # block size for encryption/decryption
-   # do the following to remove zeroes if they are found in the beginning of the string k
-#    intK = int(k)
-#    k = str(intK)
-   print(k)
-
    print('Alice wants to send an Email to Bob')
    print('-------------------------------------')
    print('Generating symmetric key to encrypt email using LEA, OFB mode')
    print('-------------------------------------')
    
-   old_plaintext = 'Call me @ 123'   
+   # Generate keys
+   k = "1" + lea.get_random_bits(127) # symmetric key
+   IV = lea.get_random_bits(128) # initial vector\
+   s = 64  # block size for encryption/decryption
+   # print('Alice and Bob agreed on symmetric key:', k)
+   
+   old_plaintext = 'Hi Bob! sup?'
    
    result =(bin(int(get_ascii_values(old_plaintext))))[2:]
    plaintext = result
    if (len(result) < 128):
        plaintext=(result).zfill(128)
-#    print(plaintext)
-   ################## LEA ##################
+ 
+   #################################### LEA ####################################
    # encrypt plaintext using symmetric key
-#    ciphertext = lea.lea_encrypt(plaintext, k)
-   ciphertext = OFB.encrypt_LEA_OFB(message=plaintext, key=k, initialV=IV, block_size=s)
+   ciphertext = OFB.encryption_decryption_LEA_OFB(message=plaintext, key=k, initialV=IV, block_size=s)
    print('Plaintext encrypted, now encrypt symmetric key using EC El Gamal')
+   print('Ciphertext:', ciphertext)
    print('-------------------------------------')
 
-   ################## EC El Gamal ##################
+   #################################### EC El Gamal ####################################
    # now encrypt the symmetric key using EC El gamal
    symmetricKey = int(k,2)  # change value from str to int
    y1x,y2x = gm.encrypt(symmetricKey) # encrypt the symmetric key using EC ElGamal
@@ -65,7 +56,7 @@ def main():
    print('Symmetric key encrypted, now add digital signature using RSA')
    print('-------------------------------------')
 
-   ################## RSA ################
+   #################################### RSA ##################################
    # Initialize keys
    rsa.primefiller()
    rsa.setkeys()
@@ -87,6 +78,7 @@ def main():
    ###########################################################################
     # now Alice's part is over, Bob's part is up
    print('Email is being sent now')
+   print('-------------------------------------')
    print('Bob received the email, first he need to verify that the message was not tampered')
    
    # verification part,first split the digital signature from the ciphertext
@@ -103,28 +95,27 @@ def main():
    # now has the ciphertext
    hashCipher2 = str(hash(signature[0]))
    print('Verifying sender ......')
+   print('Decrypted RSA signature:', hashed_ciphertext)
+   print('Hashed ciphertext:', hashCipher2)
    if (hashCipher2!=hashed_ciphertext):
        print('Verification Failed!\nThis message could have been tampered!')
        sys.exit()
        
    print('The signature is valid. Sender authenication successful')
    
-   ################## Decryption ################
+   #################################### Decryption ##################################
    # start by decrypting the symmetric key
    decrypted_symmetricKey = gm.decrypt(y1x, y2x)
    # now decrypt the ciphertext with the symmetric key
-#    decrypted = lea.lea_decrypt(ciphertext, (bin(decrypted_symmetricKey))[2:])
-   print(len(ciphertext), len(str(decrypted_symmetricKey)))
    decrypted_symmetricKey = (bin(decrypted_symmetricKey))[2:]
-   decrypted = OFB.encrypt_LEA_OFB(message=ciphertext, key=decrypted_symmetricKey, initialV=IV, block_size=s)
+   decrypted = OFB.encryption_decryption_LEA_OFB(message=ciphertext, key=decrypted_symmetricKey, initialV=IV, block_size=s)
 
    print('-------------------------------------')
-   print('Original message:', old_plaintext)
+   print('Alice sent:', old_plaintext)
    print('-------------------------------------')
-   print('Ciphertext:', ciphertext)
+   print('Ciphertext + RSA digital signature:', Signed_message)
    print('-------------------------------------')
-   print('-------------------------------------')
-   print('Decrypted message:', get_characters_from_ascii_values(str(int(decrypted,2))))
+   print('Bob received:', get_characters_from_ascii_values(str(int(decrypted,2))))
    print('-------------------------------------')
 
 

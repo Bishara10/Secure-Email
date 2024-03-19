@@ -22,23 +22,34 @@ def points_generate(arr_x,arr_y,n):
                 arr_y.append(RHS[0][j])
     return count
 
+'''
+function name : encrypt
+input : the message we want to encrypt
+output: secret values from alice to bob
+'''  
 def encrypt(msg):
-    #Cipher text 1 generation ---> Y1 = (C1x,C1y)
+    # Cipher text 1 generation ---> Y1 = (C1x,C1y),
+    # which is Alice's public key
     C1x=AlicePrivateKey*bx
     C1y=AlicePrivateKey*by
-    # print("y1=\t(",C1x,",",C1y,")\n")
-    #Cipher text 2 generation ---> Y2 = (C2x,C2y)
+    print('Alice\'s public key in EC El Gamal: Y1 = (',C1x,',', C1y,')')
+    # Cipher text 2 generation ---> Y2 = (C2x,C2y),
+    # which is the message encrypted Pm
+    # Px,Py are x and y values for Bob's public key !
     C2x=msg+AlicePrivateKey*Px
     C2y=msg+AlicePrivateKey*Py
-    # print("y2=\t(",C2x,",",C2y,")\n")
-    print('symmetric key encrypted')
+    print('Encrypted symmetric key: (',C2x,',', C2y,')')
     return C1x, C2x   
-    
+  
+'''
+function name : decrypt
+input : 1. Alice's public key y1xx, also known as y1xx = AlicePrivateKey*BasePoint
+        2. Encrypted message y2xx, also known as y2xx = M + AlicePrivateKey*BobPublicKey
+output: Decrypted message (Original message)
+'''  
 def decrypt(y1xx,y2xx):
     Mx=y2xx-BobPrivateKey*y1xx
-    return Mx
-    # print("Original plaintext (symmetric key) is:\t",Mx) 
-
+    return Mx   # the decrypted message
 
 n=1013 # prime number EC mod n
 LHS=[[]] 

@@ -2,10 +2,7 @@ import lea
 import random
 
 # LEA encryption in OFB mode
-def encrypt_LEA_OFB(message: str, key: str, initialV: str, block_size: int):
-    # # Initial Vector
-    # # IV = get_random_bits(block_size) if (initialV == "first") else initialV
-    # IV = initialV
+def encryption_decryption_LEA_OFB(message: str, key: str, initialV: str, block_size: int):
 
     # Split message to blocks of 128 bits
     blocks = []
@@ -20,10 +17,6 @@ def encrypt_LEA_OFB(message: str, key: str, initialV: str, block_size: int):
     
     if (len(blocks[-1]) < block_size):
         blocks[-1] = (blocks[-1]).zfill(block_size)
-
-    
-
-
     
     # encrypt with LEA in blocks of 128 bits each
     next_iv = initialV
@@ -34,6 +27,8 @@ def encrypt_LEA_OFB(message: str, key: str, initialV: str, block_size: int):
 
     # Perform LEA encryption on all blocks
     for i in range(n):
+        # set initial vector for next block to be the current ciphertext with left shifting s_bits 
+        next_iv = next_iv[block_size:] + next_iv[:block_size]
         # encrypt block with LEA 
         encryption = lea.lea_encrypt(block=next_iv, key=key)
         # print(encryption)
@@ -48,8 +43,6 @@ def encrypt_LEA_OFB(message: str, key: str, initialV: str, block_size: int):
         # C.append(Ci)
         C += Ci
 
-        # set initial vector for next block to be the current ciphertext with left shifting s_bits 
-        next_iv = next_iv[block_size:] + encryption[:block_size]
         # print(next_iv)
 
     # return ciphertext

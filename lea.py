@@ -1,14 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Mar 10 09:49:33 2024
 
-@author: ?
-"""
 import numpy as np
 import math
 import random
 
-#import Crypto.Random
 
 def get_bin(number: int, n: int)-> str:
     '''Returns binary representation of number filled with 0's to length n'''
@@ -101,7 +95,7 @@ def lea_encrypt(block: str, key: str) -> str:
     Returns:
     - 128-bit zaszyfrowany blok (string w postaci binarnej)
     '''
-    # wygenerowanie kluczy rundowych
+    # generating round keys
     RK = get_round_keys(key)
     
     # 1.

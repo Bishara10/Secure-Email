@@ -14,9 +14,10 @@ n = None
 def primefiller():
 	# Method used to fill the primes set is Sieve of
 	# Eratosthenes (a method to collect prime numbers)
-	seive = [True] * 250
-	seive[0] = False
-	seive[1] = False
+	seive = [True] * 250   # list of TRUE boolean values, size = 250
+	seive[0] = False   # 0 is not prime number
+	seive[1] = False   # 1 is not prime number
+    # loop to "seive" prime numbers from 0 to 250
 	for i in range(2, 250):
 		for j in range(i * 2, 250, i):
 			seive[j] = False
@@ -25,7 +26,6 @@ def primefiller():
 	for i in range(len(seive)):
 		if seive[i]:
 			prime.add(i)
-
 
 # Picking a random prime number and erasing that prime
 # number from list because p!=q
@@ -39,7 +39,6 @@ def pickrandomprime():
 	ret = next(it)
 	prime.remove(ret)
 	return ret
-
 
 def setkeys():
 	global public_key, private_key, n
